@@ -1,15 +1,19 @@
 # espresso-timer
 
-Automatic, Arduino-based espresso shot timer, that uses an accelerometer to detect when the espresso
-machine's pump start and stops.
+Arudino based firmware for an automatic espresso shot timer. 
 
-## Hardware
+To avoid modifying the espresso machine, the timer uses an accelerometer to detect when the
+machine's pump start and stops. 
 
-- [Seeed XIAO SAMD21](https://wiki.seeedstudio.com/Seeeduino-XIAO/).
+## Hardware used
+
+I used the following components:
+
+- [Seeed XIAO SAMD21](https://wiki.seeedstudio.com/Seeeduino-XIAO/) devboard.
 - [LIS3DH 3-axis MEMS accelerometer](https://www.st.com/en/mems-and-sensors/lis3dh.html).
 - [SSD1315 128x64 display](https://www.orientdisplay.com/wp-content/uploads/2021/02/SSD1315.pdf).
 
-Both LIS3DH and SSD1315 share the I2C bus.
+Both the LIS3DH and SSD1315 share the I2C bus.
 
 ### Wiring diagram
 
@@ -26,8 +30,8 @@ Both LIS3DH and SSD1315 share the I2C bus.
 ## Algorithm
 
 The LIS3DH's high-pass-filtered magnitude is sampled in 100 ms ticks and classified as one of three
-states: idle, pump, or spike. A state machine tracks the current state, starts the time on pump
-motion, freezes when the pump's vibration stops, and ignores incidental spikes.
+states: idle, pump, or spike. A state machine tracks the current state, starts the timer on pump
+motion, freezes it when the pump's vibration stops, and ignores incidental spikes.
 
 Thresholds are set in [config.h](include/config.h).
 
@@ -38,19 +42,19 @@ Thresholds are set in [config.h](include/config.h).
         ┌───────┐ ───────────────────► ┌───────────┐
         │ Sleep │                      │ Detecting │
         └───────┘ ◄─────────────────── └───────────┘
-            ▲       no sustained motion    │     ▲
-            │           (~4sec)            │     │ new motion
-            │                  2sec motion │     │ (after 2sec grace)
+            ▲       no sustained           │     ▲
+            │          motion              │     │ new motion
+            │                    2s motion │     │ (2s grace)
             │                              ▼     │
-            │  shot time < 5 sec     ┌─────────┐ │
+            │  too short shot time   ┌─────────┐ │
             ├────────────────────────│ Running │ │
             │                        └─────────┘ │
-            │            1.5 sec calm OR  │      │
-            │           1 min spike-only  |      │
+            │              1.5s  calm OR  │      │
+            │             60s spike-only  |      │
             |                             ▼      |
-            │  2min timeout         ┌─────────┐  │
+            │                       ┌─────────┐  │
             └───────────────────────│ Holding │──┘
-                                    └─────────┘
+                timeout             └─────────┘
 ```
 
 ## Build & flash

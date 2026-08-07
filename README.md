@@ -1,30 +1,37 @@
 # espresso-timer
 
-Arudino based firmware for an automatic espresso shot timer. 
+Arudino based firmware for an automatic timer to measure espresso shots.
 
-To avoid modifying the espresso machine, the timer uses an accelerometer to detect when the
-machine's pump start and stops. 
+My goal was to avoid opening the espresso machine and modifying it. Hence this timer uses an
+accelerometer to detect when the machine's pump starts and stops.
 
-## Hardware used
+## Hardware
 
-I used the following components:
+The following components are used:
 
-- [Seeed XIAO SAMD21](https://wiki.seeedstudio.com/Seeeduino-XIAO/) devboard.
-- [LIS3DH 3-axis MEMS accelerometer](https://www.st.com/en/mems-and-sensors/lis3dh.html).
-- [SSD1315 128x64 display](https://www.orientdisplay.com/wp-content/uploads/2021/02/SSD1315.pdf).
+- [Seeed XIAO SAMD21](https://wiki.seeedstudio.com/Seeeduino-XIAO/)
+- [LIS3DH 3-axis MEMS accelerometer](https://www.st.com/en/mems-and-sensors/lis3dh.html)
+- [SSD1315 128x64 display](https://www.orientdisplay.com/wp-content/uploads/2021/02/SSD1315.pdf)
 
-Both the LIS3DH and SSD1315 share the I2C bus.
+Both the LIS3DH and SSD1315 share the same I2C bus.
 
 ### Wiring diagram
 
 ```
   SSD1315        XIAO SAMD21         LIS3DH
     VCC ──────────── 3V3 ────────────  VIN
+                      │
+                      └──────────────  SA0  (sets addr to 0x19)
+
     GND ──────────── GND ────────────  GND
-    SDA ────────────  D4 ────────────  SDA
-    SCL ────────────  D5 ────────────  SCL
+
                       D3 ────────────  INT1
-                     3V3 ────────────  SA0  (sets addr to 0x19)
+
+    SDA ────────────  D4 ────────────  SDA
+
+    SCL ────────────  D5 ────────────  SCL
+
+
 ```
 
 ## Algorithm
@@ -33,7 +40,7 @@ The LIS3DH's high-pass-filtered magnitude is sampled in 100 ms ticks and classif
 states: idle, pump, or spike. A state machine tracks the current state, starts the timer on pump
 motion, freezes it when the pump's vibration stops, and ignores incidental spikes.
 
-Thresholds are set in [config.h](include/config.h).
+Thresholds are defined in [config.h](include/config.h).
 
 ### State machine
 
@@ -59,12 +66,8 @@ Thresholds are set in [config.h](include/config.h).
 
 ## Build & flash
 
-This project uses [PlatformIO](https://platformio.org/) to configure and build:
-
-```
-pio run            # build
-pio run -t upload  # build + flash over USB
-```
+This project uses [PlatformIO](https://platformio.org/) to configure and build: `pio run -t upload`
+would build and flash the firmware.
 
 ## License
 

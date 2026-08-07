@@ -10,8 +10,8 @@
 
 namespace {
 
-  // ----- LIS3DH registers we touch directly (the Adafruit driver doesn't
-  // expose them all, and motion-interrupt config needs raw writes). -----
+  // LIS3DH registers we touch directly (the Adafruit driver doesn't
+  // expose them all, and motion-interrupt config needs raw writes).
   constexpr uint8_t REG_CTRL1     = 0x20;
   constexpr uint8_t REG_CTRL2     = 0x21;
   constexpr uint8_t REG_CTRL3     = 0x22;
@@ -35,17 +35,9 @@ namespace {
   State state = State::Sleep;
   volatile bool wake_flag = false;
 
-  // i=idle, p=pump-like, x=spike.  Takes the squared mean magnitude so the
-  // hot path never calls sqrtf.
-  [[maybe_unused]] inline char motionChar(const float msq) {
-    if (msq <= cfg::kThActiveSq) return 'i';
-    if (msq <= cfg::kThSpikeSq)  return 'p';
-    return 'x';
-  }
-
   uint32_t shot_start_ms    = 0;
-  uint32_t last_active_ms   = 0;  // last tick classified as motion (any kind)
-  uint32_t last_pumplike_ms = 0;  // last tick classified as pump (not spike)
+  uint32_t last_active_ms   = 0;  // last tick classified as motion of any kind
+  uint32_t last_pumplike_ms = 0;  // last tick classified as pump and not spike
   uint32_t hold_start_ms    = 0;
   uint32_t final_elapsed_ms = 0;
 
@@ -130,7 +122,7 @@ namespace {
   }
 
   // ----- Display rendering -----
-  // Layout: top 16 px (yellow) = label, bottom 48 px (blue) = big number.
+  // Layout: top 16 px = label, bottom 48 px = big number.
   void drawTimer(const uint32_t elapsed_ms, const char* const label) {
     display.clearBuffer();
 
@@ -195,6 +187,14 @@ namespace {
     drawTimer(0, "DETECTING");
     LOG("state=D start\n");
   }
+
+#ifdef LOG_ENABLED
+  inline char motionChar(const float msq) {
+    if (msq <= cfg::kThActiveSq) return 'i';
+    if (msq <= cfg::kThSpikeSq)  return 'p';
+    return 'x';
+  }
+#endif
 
   void tickDetecting() {
     const uint32_t now = millis();
@@ -313,8 +313,7 @@ void setup() {
   display.setContrast(255);
 
   if (!lis.begin(cfg::kLis3dhAddr)) {
-    LOG("LIS3DH not found at 0x%02X -- halting\n", cfg::kLis3dhAddr);
-    error("LIS3DH not found");
+    error("LIS3DH missing");
   }
   configureLis3dh();
   LOG("LIS3DH ok @0x%02X, OLED @0x%02X\n", cfg::kLis3dhAddr, cfg::kOledAddr);
@@ -322,7 +321,7 @@ void setup() {
   pinMode(cfg::kLis3dhInt1Pin, INPUT);
   LowPower.attachInterruptWakeup(cfg::kLis3dhInt1Pin, onWakeIsr, RISING);
 
-  // Splash for half a second so the user knows we're alive, then sleep.
+  // Show for half a second to signal we're alive
   drawTimer(0, "SETUP");
   delay(500);
 

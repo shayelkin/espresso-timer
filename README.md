@@ -69,6 +69,12 @@ Thresholds are defined in [config.h](include/config.h).
 This project uses [PlatformIO](https://platformio.org/) to configure and build: `pio run -t upload`
 would build and flash the firmware.
 
+## Acknowledging AI Use
+
+This software was written with assistance from the following AI models:
+
+- Claude Opus 4.7 (Anthropic)
+
 ## License
 
 This software is licensed under the terms of the [MIT license](LICENSE).
